@@ -24,5 +24,9 @@ assistantRouter.post("/", async (req: SessionRequest, res) => {
       ...body.data.messages,
     ],
   });
-  res.json({ reply: completion.choices[0]?.message.content ?? "" });
+  res.json({
+    reply: completion.choices[0]?.message.content ?? "",
+    id: completion.id,
+    model: completion.model,
+  });
 });
