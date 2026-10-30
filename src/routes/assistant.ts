@@ -1,6 +1,7 @@
 import { Router } from "express";
 import OpenAI from "openai";
 import { z } from "zod";
+import { pendoTrack } from "../analytics/pendoTrack.js";
 import type { SessionRequest } from "./auth.js";
 
 export const assistantRouter = Router();
@@ -24,5 +25,14 @@ assistantRouter.post("/", async (req: SessionRequest, res) => {
       ...body.data.messages,
     ],
   });
-  res.json({ reply: completion.choices[0]?.message.content ?? "" });
+  const reply = completion.choices[0]?.message.content ?? "";
+  // The LLM returned an answer for this conversation.
+  pendoTrack("AI reply received", req.userId, req.accountId, {
+    model: completion.model,
+    message_count: body.data.messages.length,
+    reply_length: reply.length,
+    has_reply: reply.length > 0,
+    finish_reason: completion.choices[0]?.finish_reason ?? "unknown",
+  });
+  res.json({ reply });
 });
