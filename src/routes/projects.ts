@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { trackProjectObjectEvent } from "../analytics/objectTrack.js";
+import { pendoTrack } from "../analytics/pendoTrack.js";
 import { db, newId, type ProjectStatus } from "../db.js";
 import type { SessionRequest } from "./auth.js";
 
@@ -53,6 +54,13 @@ projectsRouter.post("/:projectId/tasks", (req: SessionRequest, res) => {
   }
   const task = { id: newId(), title: body.data.title, done: false };
   project.tasks.push(task);
+  // Task created inside the project.
+  pendoTrack("Task added", req.userId, project.accountId, {
+    project_id: project.id,
+    task_id: task.id,
+    project_status: project.status,
+    task_count: project.tasks.length,
+  });
   res.status(201).json(task);
 });
 

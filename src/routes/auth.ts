@@ -1,5 +1,6 @@
 import { Router, type NextFunction, type Request, type Response } from "express";
 import { z } from "zod";
+import { pendoTrack } from "../analytics/pendoTrack.js";
 import { db, newId } from "../db.js";
 
 export const authRouter = Router();
@@ -20,7 +21,14 @@ authRouter.post("/login", (req, res) => {
   const sessionId = newId();
   db.sessions.set(sessionId, user.id);
   res.cookie("taskly_session", sessionId, { httpOnly: true, sameSite: "lax" });
-  res.json({ user, account: db.accounts.get(user.accountId) });
+  const account = db.accounts.get(user.accountId);
+  // Credentials accepted and session cookie issued: the login succeeded.
+  pendoTrack("Session started", user.id, user.accountId, {
+    user_role: user.role,
+    account_plan: account?.plan ?? "unknown",
+    account_seats: account?.seats ?? 0,
+  });
+  res.json({ user, account });
 });
 
 export interface SessionRequest extends Request {
