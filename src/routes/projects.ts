@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { trackProjectObjectEvent } from "../analytics/objectTrack.js";
+import { trackPendoEvent } from "../analytics/pendoTrack.js";
 import { db, newId, type ProjectStatus } from "../db.js";
 import type { SessionRequest } from "./auth.js";
 
@@ -53,6 +54,18 @@ projectsRouter.post("/:projectId/tasks", (req: SessionRequest, res) => {
   }
   const task = { id: newId(), title: body.data.title, done: false };
   project.tasks.push(task);
+  // The server saved the new open task on the project.
+  trackPendoEvent({
+    event: "Task added",
+    visitorId: req.userId,
+    accountId: project.accountId,
+    properties: {
+      project_id: project.id,
+      task_id: task.id,
+      project_status: project.status,
+      task_count: project.tasks.length,
+    },
+  });
   res.status(201).json(task);
 });
 

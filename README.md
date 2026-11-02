@@ -7,6 +7,8 @@ npm install
 OPENAI_API_KEY=... npm run dev   # listens on :4000
 ```
 
+Server-side Pendo Track Events (`src/analytics/pendoTrack.ts`) are sent only when `PENDO_INTEGRATION_KEY` is set. `PENDO_DATA_HOST` defaults to `data.pendo.io`.
+
 | Route                                           | Purpose                                       |
 | ----------------------------------------------- | --------------------------------------------- |
 | `POST /api/auth/login`                          | Start a session; returns the user and account |
