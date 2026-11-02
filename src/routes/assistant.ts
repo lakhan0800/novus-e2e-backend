@@ -1,6 +1,7 @@
 import { Router } from "express";
 import OpenAI from "openai";
 import { z } from "zod";
+import { trackPendoEvent } from "../analytics/pendoTrack.js";
 import type { SessionRequest } from "./auth.js";
 
 export const assistantRouter = Router();
@@ -24,5 +25,20 @@ assistantRouter.post("/", async (req: SessionRequest, res) => {
       ...body.data.messages,
     ],
   });
-  res.json({ reply: completion.choices[0]?.message.content ?? "" });
+  const choice = completion.choices[0];
+  const reply = choice?.message.content ?? "";
+  // The AI interaction succeeded: OpenAI returned a reply that the panel will show.
+  trackPendoEvent({
+    event: "Assistant reply received",
+    visitorId: req.userId,
+    accountId: req.accountId,
+    properties: {
+      model: completion.model,
+      message_count: body.data.messages.length,
+      reply_length: reply.length,
+      finish_reason: choice?.finish_reason ?? "unknown",
+      total_tokens: completion.usage?.total_tokens ?? 0,
+    },
+  });
+  res.json({ reply });
 });
